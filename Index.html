@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Play Store</title>
+    <title>APKMIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -18,6 +18,7 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
+<meta name="google-site-verification" content="FssnrgtbS5TopgAwNN1Urz0RvJzWWIWvBzzvoRwAwsg" />
 <body class="bg-white pb-24 font-sans select-none">
 
     <!-- Notification Banner -->
@@ -35,6 +36,835 @@
                 
                 <input type="text" id="search-bar" placeholder="Search for apps & games" class="flex-grow outline-none text-gray-700 text-sm placeholder-gray-500">
                 
+                <!-- Mic Button -->
+                <button onclick="startVoiceSearch()" id="mic-btn" class="mx-3 text-gray-500 hover:text-gray-700">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+                
+                <div onclick="openProfile()" class="cursor-pointer relative">
+                    <img id="header-profile-img" src="https://ui-avatars.com/api/?name=User&background=6b21a8&color=fff" class="w-8 h-8 rounded-full object-cover border border-gray-200">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filter Tabs -->
+        <div class="flex gap-3 overflow-x-auto no-scrollbar px-4 pb-3 border-b border-gray-100">
+            <button class="px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 hover:bg-gray-50">For you</button>
+            <button class="px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 hover:bg-gray-50">Top charts</button>
+            <button class="px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 hover:bg-gray-50">Premium</button>
+        </div>
+    </header>
+
+    <div class="h-36"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="px-5 min-h-screen">
+        
+        <!-- Search Results Message (Hidden by default) -->
+        <div id="search-msg" class="hidden mb-4 text-sm text-gray-500"></div>
+
+        <!-- PAGE 1: GAMES -->
+        <section id="page-games" class="page-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-800">Recommended Games</h2>
+                <i class="fa-solid fa-arrow-right text-gray-500"></i>
+            </div>
+            <div id="games-grid" class="grid grid-cols-3 gap-x-4 gap-y-6">
+                <!-- Loaded via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE 2: APPS -->
+        <section id="page-apps" class="page-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-800">New Apps</h2>
+            </div>
+            <div id="apps-grid" class="grid grid-cols-3 gap-x-4 gap-y-6"></div>
+        </section>
+
+        <!-- PAGE 3: OFFERS -->
+        <section id="page-offers" class="page-section hidden">
+            <div class="flex flex-col items-center justify-center h-64 text-center">
+                <i class="fa-solid fa-tag text-4xl text-gray-300 mb-4"></i>
+                <h2 class="text-lg font-medium text-gray-800">Offers</h2>
+                <p class="text-sm text-gray-500 mt-2">No offers currently available.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- APP DETAILS MODAL -->
+    <div id="app-modal" class="fixed inset-0 bg-white z-[70] hidden overflow-y-auto animate-[fadeIn_0.2s_ease-out]">
+        <div class="sticky top-0 bg-white px-4 py-3 flex items-center gap-4 shadow-sm z-10">
+            <button onclick="closeModal('app-modal')" class="text-gray-600 p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <span class="font-medium text-lg">Details</span>
+        </div>
+        <div class="p-5 pb-20">
+            <!-- Header -->
+            <div class="flex gap-5 mb-8">
+                <img id="m-icon" src="" class="w-20 h-20 rounded-2xl shadow-md border border-gray-100 object-cover bg-gray-50">
+                <div class="flex-1 flex flex-col justify-center">
+                    <h1 id="m-name" class="text-xl font-bold text-gray-900 leading-tight mb-1">App Name</h1>
+                    <p id="m-developer" class="text-play-green font-medium text-sm">Developer</p>
+                    <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                        <span id="m-category" class="bg-gray-100 px-2 py-0.5 rounded">Category</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Install/Buy Button -->
+            <button id="m-btn-action" class="block w-full bg-play-green text-white text-center font-medium py-3 rounded-full shadow-md active:scale-95 transition-transform mb-2">Install</button>
+            <p id="m-status-msg" class="text-center text-xs text-green-600 mb-6 hidden font-bold"><i class="fa-solid fa-check-circle"></i> Purchased</p>
+
+            <!-- Screenshots -->
+            <h3 class="font-bold text-gray-800 mb-3 text-sm">Preview</h3>
+            <div id="m-screenshots" class="flex gap-3 overflow-x-auto no-scrollbar mb-8 pb-2 snap-x">
+                <!-- Images injected here -->
+            </div>
+            
+            <!-- Description -->
+            <h3 class="font-bold text-gray-800 mb-2 text-sm">About this app</h3>
+            <p id="m-desc" class="text-sm text-gray-600 leading-relaxed"></p>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/60 z-[90] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fa-brands fa-google-play text-play-green"></i> Secure Payment</h3>
+                <button onclick="closeModal('payment-modal')" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-gray-500 mb-3">Scan QR to pay <span id="pay-price" class="font-bold text-black text-lg"></span></p>
+                <div class="bg-white p-2 rounded-xl border border-dashed border-gray-300 inline-block mb-4 shadow-sm">
+                    <img id="pay-qr" src="" class="w-48 h-48 object-cover rounded-lg">
+                </div>
+                <p class="text-xs text-gray-400 mb-3">Enter the Transaction ID / UTR Number from your banking app:</p>
+                <input type="text" id="trx-input" placeholder="e.g. 1234567890" class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm uppercase outline-none focus:border-green-600 text-center tracking-widest font-mono mb-3">
+                <button onclick="verifySmartPayment()" id="verify-btn" class="w-full bg-play-green text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">Verify & Download</button>
+                <p id="pay-error" class="text-red-500 text-xs mt-2 hidden font-medium"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="login-view" class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="text-center mb-6">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-10 h-10 mx-auto mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Sign in</h2>
+            </div>
+            <form onsubmit="handleLogin(event)" class="flex flex-col gap-4">
+                <input type="text" id="login-name" placeholder="Enter your name" class="border border-gray-300 rounded px-3 py-2.5 text-sm outline-none focus:border-blue-600" required>
+                <button type="submit" class="bg-blue-600 text-white font-medium py-2.5 rounded hover:bg-blue-700">Next</button>
+            </form>
+        </div>
+        <div id="profile-view" class="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative hidden overflow-hidden">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-white z-10"><i class="fa-solid fa-xmark text-xl drop-shadow-md"></i></button>
+            <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div class="px-6 pb-6 -mt-10">
+                <div class="flex justify-between items-end mb-4">
+                    <img id="p-img" src="" class="w-20 h-20 rounded-full border-4 border-white object-cover bg-white shadow-md">
+                    <button onclick="handleLogout()" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full mb-1">Sign out</button>
+                </div>
+                <h2 id="p-name" class="text-xl font-bold text-gray-800">User Name</h2>
+                <div class="border-t border-gray-100 pt-4 mt-4">
+                    <label class="text-xs font-bold text-gray-600 uppercase mb-2 block">Update Picture</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="new-avatar-url" placeholder="Image URL..." class="flex-grow border border-gray-200 rounded px-3 py-2 text-xs outline-none">
+                        <button onclick="updateAvatar()" class="bg-gray-800 text-white text-xs px-4 rounded font-medium">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center py-2 z-50 pb-safe">
+        <button onclick="switchTab('games')" id="nav-games" class="nav-btn w-full flex flex-col items-center gap-1 nav-active text-gray-500">
+            <div class="icon-bg rounded-full px-5 py-1 transition-colors"><i class="fa-solid fa-gamepad text-xl"></i></div>
+            <span class="text-[10px] font-bold">Games</span>
+        </button>
+        <button onclick="switchTab('apps')" id="nav-apps" class="nav-btn w-full flex flex-col items-center gap-1 text-gray-500">
+            <div class="icon-bg rounded-full px-5 py-1 transition-colors"><i class="fa-solid fa-layer-group text-xl"></i></div>
+            <span class="text-[10px] font-bold">Apps</span>
+        </button>
+        <button onclick="switchTab('offers')" id="nav-offers" class="nav-btn w-full flex flex-col items-center gap-1 text-gray-500">
+            <div class="icon-bg rounded-full px-5 py-1 transition-colors"><i class="fa-solid fa-tag text-xl"></i></div>
+            <span class="text-[10px] font-bold">Offers</span>
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, onSnapshot, query, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNkxgDr5v2J-vleqh5iCvkTOMWAMduPo8",
+            authDomain: "apkmix-55181.firebaseapp.com",
+            databaseURL: "https://apkmix-55181-default-rtdb.firebaseio.com",
+            projectId: "apkmix-55181",
+            storageBucket: "apkmix-55181.firebasestorage.app",
+            messagingSenderId: "406277256816",
+            appId: "1:406277256816:web:f9b1fa6b3bef47cef666b5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let adminQrUrl = "https://via.placeholder.com/150";
+        let currentApp = null;
+
+        // --- 1. CONFIG ---
+        async function loadConfig() {
+            try {
+                const docSnap = await getDoc(doc(db, "settings", "payment"));
+                if(docSnap.exists()) adminQrUrl = docSnap.data().qrUrl;
+            } catch(e) {}
+        }
+        loadConfig();
+
+        // --- 2. SEARCH FEATURE (Fix) ---
+        const searchBar = document.getElementById('search-bar');
+        searchBar.addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.app-card');
+            let foundCount = 0;
+
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name').toLowerCase();
+                if(name.includes(term)) {
+                    card.style.display = "flex";
+                    foundCount++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            const msg = document.getElementById('search-msg');
+            if(term.length > 0) {
+                msg.classList.remove('hidden');
+                msg.innerText = foundCount > 0 ? `Found ${foundCount} results` : "No apps found";
+            } else {
+                msg.classList.add('hidden');
+            }
+        });
+
+        // --- 3. MIC FEATURE (Web Speech API) ---
+        window.startVoiceSearch = () => {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert("Voice search not supported in this browser.");
+                return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            const micBtn = document.getElementById('mic-btn');
+
+            recognition.lang = 'en-US';
+            recognition.start();
+
+            micBtn.classList.add('mic-listening'); // Animation
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                searchBar.value = transcript;
+                // Trigger search event
+                searchBar.dispatchEvent(new Event('keyup'));
+                micBtn.classList.remove('mic-listening');
+            };
+
+            recognition.onerror = () => micBtn.classList.remove('mic-listening');
+            recognition.onend = () => micBtn.classList.remove('mic-listening');
+        };
+
+        // --- 4. NAVIGATION ---
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`page-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('nav-active');
+                b.querySelector('.icon-bg').classList.remove('bg-green-100');
+            });
+            document.getElementById(`nav-${tab}`).classList.add('nav-active');
+            window.scrollTo(0,0);
+        };
+
+        // --- 5. APPS LOADING ---
+        async function fetchApps() {
+            const gamesGrid = document.getElementById('games-grid');
+            const appsGrid = document.getElementById('apps-grid');
+            const q = query(collection(db, "apps"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+            
+            gamesGrid.innerHTML = "";
+            appsGrid.innerHTML = "";
+
+            snap.forEach(d => {
+                const data = d.data();
+                const json = encodeURIComponent(JSON.stringify({...data, id: d.id}));
+                
+                // Added class 'app-card' and 'data-name' for search functionality
+                const card = `
+                    <div class="app-card flex flex-col gap-2 cursor-pointer group" data-name="${data.name}" onclick="openAppModal('${json}')">
+                        <div class="relative w-full aspect-square">
+                            <img src="${data.iconUrl}" class="w-full h-full rounded-2xl shadow-sm object-cover border border-gray-100">
+                        </div>
+                        <div class="px-0.5">
+                            <h3 class="text-xs font-medium text-gray-800 truncate">${data.name}</h3>
+                            <div class="flex items-center gap-1 text-[10px] text-gray-500">
+                                <span>${data.rating || '4.5'}</span><i class="fa-solid fa-star text-[8px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                gamesGrid.innerHTML += card;
+                if(data.category !== 'Games') appsGrid.innerHTML += card;
+            });
+        }
+
+        // --- 6. MODAL ---
+        window.openAppModal = (json) => {
+            currentApp = JSON.parse(decodeURIComponent(json));
+            const d = currentApp;
+            const modal = document.getElementById('app-modal');
+
+            document.getElementById('m-icon').src = d.iconUrl;
+            document.getElementById('m-name').innerText = d.name;
+            document.getElementById('m-developer').innerText = d.developer;
+            document.getElementById('m-category').innerText = d.category;
+            document.getElementById('m-desc').innerText = d.description;
+
+            const ssContainer = document.getElementById('m-screenshots');
+            ssContainer.innerHTML = "";
+            let ssList = [];
+            if(Array.isArray(d.screenshots)) ssList = d.screenshots;
+            else if(typeof d.screenshots === 'string') ssList = d.screenshots.split(',');
+            
+            if(ssList.length > 0 && ssList[0]) {
+                ssList.forEach(url => {
+                    ssContainer.innerHTML += `<img src="${url.trim()}" class="h-44 w-auto rounded-lg object-cover border border-gray-100 snap-center shadow-sm">`;
+                });
+            } else {
+                ssContainer.innerHTML = "<p class='text-xs text-gray-400 pl-1'>No preview images.</p>";
+            }
+
+            const btn = document.getElementById('m-btn-action');
+            document.getElementById('m-status-msg').classList.add('hidden');
+
+            if(d.priceType === 'Paid') {
+                btn.innerText = `Buy ₹${d.priceAmount}`;
+                btn.onclick = openPaymentModal;
+                btn.classList.add('bg-play-green');
+            } else {
+                setDownloadMode(d.downloadLink);
+            }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        function setDownloadMode(link) {
+            const btn = document.getElementById('m-btn-action');
+            btn.innerText = "Install";
+            btn.onclick = () => window.open(link, '_blank');
+        }
+        
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        };
+
+        // --- 7. SMART PAYMENT VERIFICATION (Pattern Check) ---
+        window.openPaymentModal = () => {
+            document.getElementById('payment-modal').classList.remove('hidden');
+            document.getElementById('pay-price').innerText = `₹${currentApp.priceAmount}`;
+            document.getElementById('pay-qr').src = adminQrUrl;
+            document.getElementById('trx-input').value = "";
+            document.getElementById('pay-error').classList.add('hidden');
+        };
+
+        window.verifySmartPayment = () => {
+            const btn = document.getElementById('verify-btn');
+            const error = document.getElementById('pay-error');
+            const tid = document.getElementById('trx-input').value.trim();
+
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            // Pattern Logic:
+            // 1. Minimum 10 characters (Transaction IDs are usually long)
+            // 2. Must contain numbers (Cannot be just "Hello")
+            // 3. Generally alphanumeric (e.g. UPI IDs, UTR)
+            const isValidLength = tid.length >= 10;
+            const hasNumbers = /\d/.test(tid); 
+            const isNotJunk = !/^(.)\1+$/.test(tid); // Not just "aaaaaaaa"
+
+            setTimeout(() => {
+                if (isValidLength && hasNumbers && isNotJunk) {
+                    // Success Case
+                    closeModal('payment-modal');
+                    document.getElementById('m-status-msg').classList.remove('hidden');
+                    setDownloadMode(currentApp.downloadLink);
+                    alert("Payment Successful! Download Started.");
+                } else {
+                    // Failure Case
+                    error.innerText = "Invalid Transaction ID. Please enter correct UTR.";
+                    error.classList.remove('hidden');
+                }
+                btn.innerText = "Verify & Download";
+                btn.disabled = false;
+            }, 1000); // 1 Second Fake Delay for realism
+        };
+
+        // --- 8. PROFILE & NOTIFS ---
+        window.user = JSON.parse(localStorage.getItem('play_user')) || null;
+        window.openProfile = () => {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.remove('hidden');
+            if(window.user) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('profile-view').classList.remove('hidden');
+                document.getElementById('p-name').innerText = window.user.name;
+                document.getElementById('p-img').src = window.user.avatar;
+            } else {
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('profile-view').classList.add('hidden');
+            }
+        };
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('login-name').value;
+            window.user = { name, avatar: `https://ui-avatars.com/api/?name=${name}&background=01875f&color=fff` };
+            localStorage.setItem('play_user', JSON.stringify(window.user));
+            document.getElementById('header-profile-img').src = window.user.avatar;
+            closeModal('profile-modal');
+        };
+        window.handleLogout = () => {
+            localStorage.removeItem('play_user');
+            window.user = null;
+            document.getElementById('header-profile-img').src = "https://ui-avatars.com/api/?name=User&background=6b21a8&color=fff";
+            closeModal('profile-modal');
+        };
+        if(window.user) document.getElementById('header-profile-img').src = window.user.avatar;
+
+        onSnapshot(query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+            if(!snap.empty) {
+                document.getElementById('notification-banner').classList.remove('hidden');
+                document.getElementById('notif-text').innerText = snap.docs[0].data().message;
+            }
+        });
+
+        fetchApps();
+    </script>
+</body>
+                </html>    <main class="px-5 min-h-screen">
+        
+        <!-- Search Results Message (Hidden by default) -->
+        <div id="search-msg" class="hidden mb-4 text-sm text-gray-500"></div>
+
+        <!-- PAGE 1: GAMES -->
+        <section id="page-games" class="page-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-800">Recommended Games</h2>
+                <i class="fa-solid fa-arrow-right text-gray-500"></i>
+            </div>
+            <div id="games-grid" class="grid grid-cols-3 gap-x-4 gap-y-6">
+                <!-- Loaded via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE 2: APPS -->
+        <section id="page-apps" class="page-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-800">New Apps</h2>
+            </div>
+            <div id="apps-grid" class="grid grid-cols-3 gap-x-4 gap-y-6"></div>
+        </section>
+
+        <!-- PAGE 3: OFFERS -->
+        <section id="page-offers" class="page-section hidden">
+            <div class="flex flex-col items-center justify-center h-64 text-center">
+                <i class="fa-solid fa-tag text-4xl text-gray-300 mb-4"></i>
+                <h2 class="text-lg font-medium text-gray-800">Offers</h2>
+                <p class="text-sm text-gray-500 mt-2">No offers currently available.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- APP DETAILS MODAL -->
+    <div id="app-modal" class="fixed inset-0 bg-white z-[70] hidden overflow-y-auto animate-[fadeIn_0.2s_ease-out]">
+        <div class="sticky top-0 bg-white px-4 py-3 flex items-center gap-4 shadow-sm z-10">
+            <button onclick="closeModal('app-modal')" class="text-gray-600 p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <span class="font-medium text-lg">Details</span>
+        </div>
+        <div class="p-5 pb-20">
+            <!-- Header -->
+            <div class="flex gap-5 mb-8">
+                <img id="m-icon" src="" class="w-20 h-20 rounded-2xl shadow-md border border-gray-100 object-cover bg-gray-50">
+                <div class="flex-1 flex flex-col justify-center">
+                    <h1 id="m-name" class="text-xl font-bold text-gray-900 leading-tight mb-1">App Name</h1>
+                    <p id="m-developer" class="text-play-green font-medium text-sm">Developer</p>
+                    <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                        <span id="m-category" class="bg-gray-100 px-2 py-0.5 rounded">Category</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Install/Buy Button -->
+            <button id="m-btn-action" class="block w-full bg-play-green text-white text-center font-medium py-3 rounded-full shadow-md active:scale-95 transition-transform mb-2">Install</button>
+            <p id="m-status-msg" class="text-center text-xs text-green-600 mb-6 hidden font-bold"><i class="fa-solid fa-check-circle"></i> Purchased</p>
+
+            <!-- Screenshots -->
+            <h3 class="font-bold text-gray-800 mb-3 text-sm">Preview</h3>
+            <div id="m-screenshots" class="flex gap-3 overflow-x-auto no-scrollbar mb-8 pb-2 snap-x">
+                <!-- Images injected here -->
+            </div>
+            
+            <!-- Description -->
+            <h3 class="font-bold text-gray-800 mb-2 text-sm">About this app</h3>
+            <p id="m-desc" class="text-sm text-gray-600 leading-relaxed"></p>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/60 z-[90] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-[slideUp_0.3s_ease-out]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2"><i class="fa-brands fa-google-play text-play-green"></i> Secure Payment</h3>
+                <button onclick="closeModal('payment-modal')" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-gray-500 mb-3">Scan QR to pay <span id="pay-price" class="font-bold text-black text-lg"></span></p>
+                <div class="bg-white p-2 rounded-xl border border-dashed border-gray-300 inline-block mb-4 shadow-sm">
+                    <img id="pay-qr" src="" class="w-48 h-48 object-cover rounded-lg">
+                </div>
+                <p class="text-xs text-gray-400 mb-3">Enter the Transaction ID / UTR Number from your banking app:</p>
+                <input type="text" id="trx-input" placeholder="e.g. 1234567890" class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm uppercase outline-none focus:border-green-600 text-center tracking-widest font-mono mb-3">
+                <button onclick="verifySmartPayment()" id="verify-btn" class="w-full bg-play-green text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">Verify & Download</button>
+                <p id="pay-error" class="text-red-500 text-xs mt-2 hidden font-medium"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="login-view" class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="text-center mb-6">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-10 h-10 mx-auto mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Sign in</h2>
+            </div>
+            <form onsubmit="handleLogin(event)" class="flex flex-col gap-4">
+                <input type="text" id="login-name" placeholder="Enter your name" class="border border-gray-300 rounded px-3 py-2.5 text-sm outline-none focus:border-blue-600" required>
+                <button type="submit" class="bg-blue-600 text-white font-medium py-2.5 rounded hover:bg-blue-700">Next</button>
+            </form>
+        </div>
+        <div id="profile-view" class="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative hidden overflow-hidden">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-white z-10"><i class="fa-solid fa-xmark text-xl drop-shadow-md"></i></button>
+            <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div class="px-6 pb-6 -mt-10">
+                <div class="flex justify-between items-end mb-4">
+                    <img id="p-img" src="" class="w-20 h-20 rounded-full border-4 border-white object-cover bg-white shadow-md">
+                    <button onclick="handleLogout()" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full mb-1">Sign out</button>
+                </div>
+                <h2 id="p-name" class="text-xl font-bold text-gray-800">User Name</h2>
+                <div class="border-t border-gray-100 pt-4 mt-4">
+                    <label class="text-xs font-bold text-gray-600 uppercase mb-2 block">Update Picture</label>
+                    <div class="flex gap-2">
+                        <input type="url" id="new-avatar-url" placeholder="Image URL..." class="flex-grow border border-gray-200 rounded px-3 py-2 text-xs outline-none">
+                        <button onclick="updateAvatar()" class="bg-gray-800 text-white text-xs px-4 rounded font-medium">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center py-2 z-50 pb-safe">
+        <button onclick="switchTab('games')" id="nav-games" class="nav-btn w-full flex flex-col items-center gap-1 nav-active text-gray-500">
+            <div class="icon-bg rounded-full px-5 py-1 transition-colors"><i class="fa-solid fa-gamepad text-xl"></i></div>
+            <span class="text-[10px] font-bold">Games</span>
+        </button>
+        <button onclick="switchTab('apps')" id="nav-apps" class="nav-btn w-full flex flex-col items-center gap-1 text-gray-500">
+            <div class="icon-bg rounded-full px-5 py-1 transition-colors"><i class="fa-solid fa-layer-group text-xl"></i></div>
+            <span class="text-[10px] font-bold">Apps</span>
+        </button>
+        <button onclick="switchTab('offers')" id="nav-offers" class="nav-btn w-full flex flex-col items-center gap-1 text-gray-500">
+            <div class="icon-bg rounded-full px-5 py-1 transition-colors"><i class="fa-solid fa-tag text-xl"></i></div>
+            <span class="text-[10px] font-bold">Offers</span>
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, onSnapshot, query, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNkxgDr5v2J-vleqh5iCvkTOMWAMduPo8",
+            authDomain: "apkmix-55181.firebaseapp.com",
+            databaseURL: "https://apkmix-55181-default-rtdb.firebaseio.com",
+            projectId: "apkmix-55181",
+            storageBucket: "apkmix-55181.firebasestorage.app",
+            messagingSenderId: "406277256816",
+            appId: "1:406277256816:web:f9b1fa6b3bef47cef666b5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let adminQrUrl = "https://via.placeholder.com/150";
+        let currentApp = null;
+
+        // --- 1. CONFIG ---
+        async function loadConfig() {
+            try {
+                const docSnap = await getDoc(doc(db, "settings", "payment"));
+                if(docSnap.exists()) adminQrUrl = docSnap.data().qrUrl;
+            } catch(e) {}
+        }
+        loadConfig();
+
+        // --- 2. SEARCH FEATURE (Fix) ---
+        const searchBar = document.getElementById('search-bar');
+        searchBar.addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.app-card');
+            let foundCount = 0;
+
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name').toLowerCase();
+                if(name.includes(term)) {
+                    card.style.display = "flex";
+                    foundCount++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            const msg = document.getElementById('search-msg');
+            if(term.length > 0) {
+                msg.classList.remove('hidden');
+                msg.innerText = foundCount > 0 ? `Found ${foundCount} results` : "No apps found";
+            } else {
+                msg.classList.add('hidden');
+            }
+        });
+
+        // --- 3. MIC FEATURE (Web Speech API) ---
+        window.startVoiceSearch = () => {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert("Voice search not supported in this browser.");
+                return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            const micBtn = document.getElementById('mic-btn');
+
+            recognition.lang = 'en-US';
+            recognition.start();
+
+            micBtn.classList.add('mic-listening'); // Animation
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                searchBar.value = transcript;
+                // Trigger search event
+                searchBar.dispatchEvent(new Event('keyup'));
+                micBtn.classList.remove('mic-listening');
+            };
+
+            recognition.onerror = () => micBtn.classList.remove('mic-listening');
+            recognition.onend = () => micBtn.classList.remove('mic-listening');
+        };
+
+        // --- 4. NAVIGATION ---
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`page-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('nav-active');
+                b.querySelector('.icon-bg').classList.remove('bg-green-100');
+            });
+            document.getElementById(`nav-${tab}`).classList.add('nav-active');
+            window.scrollTo(0,0);
+        };
+
+        // --- 5. APPS LOADING ---
+        async function fetchApps() {
+            const gamesGrid = document.getElementById('games-grid');
+            const appsGrid = document.getElementById('apps-grid');
+            const q = query(collection(db, "apps"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+            
+            gamesGrid.innerHTML = "";
+            appsGrid.innerHTML = "";
+
+            snap.forEach(d => {
+                const data = d.data();
+                const json = encodeURIComponent(JSON.stringify({...data, id: d.id}));
+                
+                // Added class 'app-card' and 'data-name' for search functionality
+                const card = `
+                    <div class="app-card flex flex-col gap-2 cursor-pointer group" data-name="${data.name}" onclick="openAppModal('${json}')">
+                        <div class="relative w-full aspect-square">
+                            <img src="${data.iconUrl}" class="w-full h-full rounded-2xl shadow-sm object-cover border border-gray-100">
+                        </div>
+                        <div class="px-0.5">
+                            <h3 class="text-xs font-medium text-gray-800 truncate">${data.name}</h3>
+                            <div class="flex items-center gap-1 text-[10px] text-gray-500">
+                                <span>${data.rating || '4.5'}</span><i class="fa-solid fa-star text-[8px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                gamesGrid.innerHTML += card;
+                if(data.category !== 'Games') appsGrid.innerHTML += card;
+            });
+        }
+
+        // --- 6. MODAL ---
+        window.openAppModal = (json) => {
+            currentApp = JSON.parse(decodeURIComponent(json));
+            const d = currentApp;
+            const modal = document.getElementById('app-modal');
+
+            document.getElementById('m-icon').src = d.iconUrl;
+            document.getElementById('m-name').innerText = d.name;
+            document.getElementById('m-developer').innerText = d.developer;
+            document.getElementById('m-category').innerText = d.category;
+            document.getElementById('m-desc').innerText = d.description;
+
+            const ssContainer = document.getElementById('m-screenshots');
+            ssContainer.innerHTML = "";
+            let ssList = [];
+            if(Array.isArray(d.screenshots)) ssList = d.screenshots;
+            else if(typeof d.screenshots === 'string') ssList = d.screenshots.split(',');
+            
+            if(ssList.length > 0 && ssList[0]) {
+                ssList.forEach(url => {
+                    ssContainer.innerHTML += `<img src="${url.trim()}" class="h-44 w-auto rounded-lg object-cover border border-gray-100 snap-center shadow-sm">`;
+                });
+            } else {
+                ssContainer.innerHTML = "<p class='text-xs text-gray-400 pl-1'>No preview images.</p>";
+            }
+
+            const btn = document.getElementById('m-btn-action');
+            document.getElementById('m-status-msg').classList.add('hidden');
+
+            if(d.priceType === 'Paid') {
+                btn.innerText = `Buy ₹${d.priceAmount}`;
+                btn.onclick = openPaymentModal;
+                btn.classList.add('bg-play-green');
+            } else {
+                setDownloadMode(d.downloadLink);
+            }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        };
+
+        function setDownloadMode(link) {
+            const btn = document.getElementById('m-btn-action');
+            btn.innerText = "Install";
+            btn.onclick = () => window.open(link, '_blank');
+        }
+        
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        };
+
+        // --- 7. SMART PAYMENT VERIFICATION (Pattern Check) ---
+        window.openPaymentModal = () => {
+            document.getElementById('payment-modal').classList.remove('hidden');
+            document.getElementById('pay-price').innerText = `₹${currentApp.priceAmount}`;
+            document.getElementById('pay-qr').src = adminQrUrl;
+            document.getElementById('trx-input').value = "";
+            document.getElementById('pay-error').classList.add('hidden');
+        };
+
+        window.verifySmartPayment = () => {
+            const btn = document.getElementById('verify-btn');
+            const error = document.getElementById('pay-error');
+            const tid = document.getElementById('trx-input').value.trim();
+
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            // Pattern Logic:
+            // 1. Minimum 10 characters (Transaction IDs are usually long)
+            // 2. Must contain numbers (Cannot be just "Hello")
+            // 3. Generally alphanumeric (e.g. UPI IDs, UTR)
+            const isValidLength = tid.length >= 10;
+            const hasNumbers = /\d/.test(tid); 
+            const isNotJunk = !/^(.)\1+$/.test(tid); // Not just "aaaaaaaa"
+
+            setTimeout(() => {
+                if (isValidLength && hasNumbers && isNotJunk) {
+                    // Success Case
+                    closeModal('payment-modal');
+                    document.getElementById('m-status-msg').classList.remove('hidden');
+                    setDownloadMode(currentApp.downloadLink);
+                    alert("Payment Successful! Download Started.");
+                } else {
+                    // Failure Case
+                    error.innerText = "Invalid Transaction ID. Please enter correct UTR.";
+                    error.classList.remove('hidden');
+                }
+                btn.innerText = "Verify & Download";
+                btn.disabled = false;
+            }, 1000); // 1 Second Fake Delay for realism
+        };
+
+        // --- 8. PROFILE & NOTIFS ---
+        window.user = JSON.parse(localStorage.getItem('play_user')) || null;
+        window.openProfile = () => {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.remove('hidden');
+            if(window.user) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('profile-view').classList.remove('hidden');
+                document.getElementById('p-name').innerText = window.user.name;
+                document.getElementById('p-img').src = window.user.avatar;
+            } else {
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('profile-view').classList.add('hidden');
+            }
+        };
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('login-name').value;
+            window.user = { name, avatar: `https://ui-avatars.com/api/?name=${name}&background=01875f&color=fff` };
+            localStorage.setItem('play_user', JSON.stringify(window.user));
+            document.getElementById('header-profile-img').src = window.user.avatar;
+            closeModal('profile-modal');
+        };
+        window.handleLogout = () => {
+            localStorage.removeItem('play_user');
+            window.user = null;
+            document.getElementById('header-profile-img').src = "https://ui-avatars.com/api/?name=User&background=6b21a8&color=fff";
+            closeModal('profile-modal');
+        };
+        if(window.user) document.getElementById('header-profile-img').src = window.user.avatar;
+
+        onSnapshot(query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(1)), (snap) => {
+            if(!snap.empty) {
+                document.getElementById('notification-banner').classList.remove('hidden');
+                document.getElementById('notif-text').innerText = snap.docs[0].data().message;
+            }
+        });
+
+        fetchApps();
+    </script>
+</body>
+    </html>                
                 <!-- Mic Button -->
                 <button onclick="startVoiceSearch()" id="mic-btn" class="mx-3 text-gray-500 hover:text-gray-700">
                     <i class="fa-solid fa-microphone"></i>
