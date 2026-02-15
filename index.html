@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-<meta name="google-site-verification" content="FssnrgtbS5TopgAwNN1Urz0RvJzWWIWvBzzvoRwAwsg" />
-
-
-<title>APKMIX</title>
+    <title>APKMIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- OneSignal SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({ appId: "YOUR_ONESIGNAL_APP_ID", notifyButton: { enable: true }, allowLocalhostAsSecureOrigin: true });
+      });
+    </script>
+
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .bg-play-green { background-color: #01875f; }
@@ -17,24 +23,457 @@
         .nav-active { color: #01875f; }
         .nav-active .icon-bg { background-color: #dbfceb; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        /* Voice Animation */
-        .mic-listening { color: #DB4437; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .category-btn.active { background-color: #01875f; color: white; border-color: #01875f; }
+        
+        /* FEATURED CAROUSEL STYLES (Fixed) */
+        .featured-wrapper { 
+            display: flex; 
+            overflow-x: auto; 
+            scroll-snap-type: x mandatory; 
+            gap: 16px; 
+            padding-bottom: 10px; 
+            -webkit-overflow-scrolling: touch; 
+        }
+        .featured-card { 
+            min-width: 85vw; /* 85% width to show hint of next card */
+            max-width: 85vw;
+            scroll-snap-align: center; 
+            background: white; 
+            border-radius: 12px; 
+            border: 1px solid #e5e7eb; 
+            overflow: hidden; 
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        /* Screenshots inside Featured Card */
+        .ss-scroll-container { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 8px; 
+            padding: 0 12px 12px 12px; 
+        }
+        .ss-scroll-container img { 
+            scroll-snap-align: start; 
+            flex-shrink: 0; 
+            height: 140px; 
+            border-radius: 8px; 
+            border: 1px solid #f3f4f6;
+        }
     </style>
 </head>
-<meta name="google-site-verification" content="FssnrgtbS5TopgAwNN1Urz0RvJzWWIWvBzzvoRwAwsg" />
-<body class="bg-white pb-24 font-sans select-none">
 
-    <!-- Notification Banner -->
-    <div id="notification-banner" class="hidden fixed top-0 w-full bg-blue-600 text-white text-xs px-4 py-3 z-[60] flex justify-between items-center shadow-md">
-        <span id="notif-text" class="font-medium">New Update!</span>
-        <button onclick="this.parentElement.style.display='none'"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
+<body class="bg-gray-50 pb-24 font-sans select-none">
 
     <!-- Header -->
-    <header class="fixed top-0 w-full bg-white z-50 pt-2 shadow-sm transition-all" id="main-header">
+    <header class="fixed top-0 w-full bg-white z-50 pt-2 shadow-sm" id="main-header">
         <div class="px-4 pb-2">
-            <!-- Search Bar Section -->
+            <div class="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-full shadow-sm px-4 py-2 mt-2">
+                <i class="fa-solid fa-bars text-gray-500"></i>
+                <input type="text" id="search-bar" placeholder="Search apps & games" class="flex-grow outline-none text-gray-700 text-sm">
+                <button onclick="startVoiceSearch()" id="mic-btn" class="text-gray-500"><i class="fa-solid fa-microphone"></i></button>
+                <div onclick="openProfile()" class="cursor-pointer relative shrink-0">
+                    <img id="header-profile-img" src="https://ui-avatars.com/api/?name=User&background=6b21a8&color=fff" class="w-8 h-8 rounded-full border">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Categories -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-3 border-b border-gray-100" id="category-tabs">
+            <button onclick="filterCategory('All')" class="category-btn active px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">All</button>
+            <button onclick="filterCategory('Action')" class="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">Action</button>
+            <button onclick="filterCategory('Adventure')" class="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">Adventure</button>
+            <button onclick="filterCategory('Arcade')" class="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">Arcade</button>
+            <button onclick="filterCategory('Puzzle')" class="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">Puzzle</button>
+            <button onclick="filterCategory('Tools')" class="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">Tools</button>
+            <button onclick="filterCategory('Social')" class="category-btn px-4 py-1.5 rounded-full border border-gray-300 text-sm font-medium whitespace-nowrap text-gray-600 bg-white">Social</button>
+        </div>
+    </header>
+
+    <div class="h-36"></div>
+
+    <main class="px-4 min-h-screen">
+        
+        <!-- TOP PROJECTS (MULTIPLE CAROUSEL) -->
+        <div id="featured-section" class="mb-6 hidden">
+            <h2 class="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide px-1">Spotlight</h2>
+            <!-- This wrapper allows swiping between different top projects -->
+            <div id="featured-wrapper" class="featured-wrapper no-scrollbar">
+                <!-- Javascript will inject cards here -->
+            </div>
+        </div>
+
+        <!-- APP LIST -->
+        <section id="page-apps">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-medium text-gray-800" id="grid-title">All Apps</h2>
+            </div>
+            <div id="apps-grid" class="grid grid-cols-3 gap-x-3 gap-y-6">
+                <!-- Javascript will load apps here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- APP DETAILS MODAL -->
+    <div id="app-modal" class="fixed inset-0 bg-white z-[70] hidden overflow-y-auto animate-[fadeIn_0.2s_ease-out]">
+        <div class="sticky top-0 bg-white px-4 py-3 flex items-center gap-4 shadow-sm z-10">
+            <button onclick="closeModal('app-modal')" class="text-gray-600 p-2"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+            <span class="font-medium text-lg">Details</span>
+        </div>
+        <div class="p-5 pb-20">
+            <div class="flex gap-5 mb-6">
+                <img id="m-icon" src="" class="w-20 h-20 rounded-2xl shadow-md border border-gray-100 object-cover bg-gray-50">
+                <div class="flex-1 flex flex-col justify-center">
+                    <h1 id="m-name" class="text-xl font-bold text-gray-900 leading-tight mb-1">App Name</h1>
+                    <p id="m-developer" class="text-play-green font-medium text-sm">Developer</p>
+                    <div class="text-xs text-gray-500 mt-1" id="m-cat-display">Category</div>
+                </div>
+            </div>
+
+            <!-- Stats Row (Downloads, Size, Rating, Version) -->
+            <div class="flex items-center justify-around border-b border-gray-100 pb-6 mb-6">
+                <div class="text-center">
+                    <div class="flex items-center justify-center gap-1 font-bold text-gray-800 text-sm">
+                        <span id="m-rating">4.5</span> <i class="fa-solid fa-star text-[10px]"></i>
+                    </div>
+                    <div class="text-[10px] text-gray-500">Rating</div>
+                </div>
+                <div class="w-px h-6 bg-gray-200"></div>
+                <div class="text-center">
+                    <div class="font-bold text-gray-800 text-sm" id="m-size">N/A</div>
+                    <div class="text-[10px] text-gray-500">Size</div>
+                </div>
+                <div class="w-px h-6 bg-gray-200"></div>
+                <div class="text-center">
+                    <div class="font-bold text-gray-800 text-sm" id="m-downloads">0</div>
+                    <div class="text-[10px] text-gray-500">Downloads</div>
+                </div>
+                <div class="w-px h-6 bg-gray-200"></div>
+                <div class="text-center">
+                    <div class="font-bold text-gray-800 text-sm" id="m-version">v1.0</div>
+                    <div class="text-[10px] text-gray-500">Version</div>
+                </div>
+            </div>
+
+            <button id="m-btn-action" class="block w-full bg-play-green text-white text-center font-bold py-3 rounded-full shadow-md active:scale-95 transition-transform mb-6 text-sm uppercase tracking-wide">Install</button>
+            
+            <p id="m-status-msg" class="text-center text-xs text-green-600 mb-6 hidden font-bold"><i class="fa-solid fa-check-circle"></i> Purchased</p>
+
+            <h3 class="font-bold text-gray-800 mb-3 text-sm">Preview</h3>
+            <div id="m-screenshots" class="flex gap-3 overflow-x-auto no-scrollbar mb-8 pb-2 snap-x"></div>
+            
+            <h3 class="font-bold text-gray-800 mb-2 text-sm">About this app</h3>
+            <p id="m-desc" class="text-sm text-gray-600 leading-relaxed mb-10 whitespace-pre-line"></p>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/60 z-[90] hidden flex items-end sm:items-center justify-center backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">Secure Payment</h3>
+                <button onclick="closeModal('payment-modal')" class="text-gray-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-gray-500 mb-3">Scan QR to pay <span id="pay-price" class="font-bold text-black text-lg"></span></p>
+                <img id="pay-qr" src="" class="w-48 h-48 object-cover rounded-lg mx-auto mb-4 border border-gray-200">
+                <input type="text" id="trx-input" placeholder="Enter Transaction ID / UTR" class="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm text-center tracking-widest font-mono mb-3 outline-none focus:border-green-600">
+                <button onclick="verifySmartPayment()" id="verify-btn" class="w-full bg-play-green text-white font-bold py-3 rounded-lg">Verify & Download</button>
+                <p id="pay-error" class="text-red-500 text-xs mt-2 hidden font-bold"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/60 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div id="login-view" class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Sign in</h2>
+            </div>
+            <form onsubmit="handleLogin(event)" class="flex flex-col gap-4">
+                <input type="text" id="login-name" placeholder="Enter your name" class="border border-gray-300 rounded px-3 py-2.5 text-sm outline-none focus:border-blue-600" required>
+                <button type="submit" class="bg-blue-600 text-white font-medium py-2.5 rounded hover:bg-blue-700">Next</button>
+            </form>
+        </div>
+        <div id="profile-view" class="bg-white rounded-2xl w-full max-w-sm shadow-2xl relative hidden overflow-hidden">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 right-4 text-white z-10"><i class="fa-solid fa-xmark text-xl drop-shadow-md"></i></button>
+            <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div class="px-6 pb-6 -mt-10">
+                <div class="flex justify-between items-end mb-4">
+                    <img id="p-img" src="" class="w-20 h-20 rounded-full border-4 border-white object-cover bg-white shadow-md">
+                    <button onclick="handleLogout()" class="text-xs font-bold text-red-600 bg-red-50 px-3 py-1.5 rounded-full mb-1">Sign out</button>
+                </div>
+                <h2 id="p-name" class="text-xl font-bold text-gray-800">User Name</h2>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNkxgDr5v2J-vleqh5iCvkTOMWAMduPo8",
+            authDomain: "apkmix-55181.firebaseapp.com",
+            databaseURL: "https://apkmix-55181-default-rtdb.firebaseio.com",
+            projectId: "apkmix-55181",
+            storageBucket: "apkmix-55181.firebasestorage.app",
+            messagingSenderId: "406277256816",
+            appId: "1:406277256816:web:f9b1fa6b3bef47cef666b5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let allApps = [];
+        let adminQrUrl = "";
+        
+        // --- DATA FETCHING ---
+        async function fetchData() {
+            try { const s = await getDoc(doc(db, "settings", "payment")); if(s.exists()) adminQrUrl = s.data().qrUrl; } catch(e){}
+            const q = query(collection(db, "apps"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+            allApps = [];
+            snap.forEach(d => allApps.push({...d.data(), id: d.id}));
+            
+            renderFeatured();
+            filterCategory('All');
+        }
+
+        // --- RENDER MULTIPLE FEATURED APPS (SLIDER) ---
+        function renderFeatured() {
+            // Find all featured apps
+            const featuredApps = allApps.filter(a => a.isFeatured === true);
+            const container = document.getElementById('featured-section');
+            const wrapper = document.getElementById('featured-wrapper');
+            wrapper.innerHTML = "";
+
+            if (featuredApps.length > 0) {
+                container.classList.remove('hidden');
+                featuredApps.forEach(app => {
+                    let ssHtml = "";
+                    if(app.screenshots && app.screenshots.length > 0) {
+                        app.screenshots.forEach(url => {
+                            ssHtml += `<img src="${url}">`;
+                        });
+                    } else {
+                        ssHtml = `<div class="h-[140px] w-full flex items-center justify-center text-gray-400 bg-gray-50 text-xs border rounded-lg">No Preview</div>`;
+                    }
+
+                    const json = encodeURIComponent(JSON.stringify(app));
+
+                    // Append Card
+                    wrapper.innerHTML += `
+                        <div class="featured-card">
+                            <div class="p-3 pb-0 flex gap-3 mb-2 cursor-pointer" onclick="openAppModal('${json}')">
+                                <img src="${app.iconUrl}" class="w-12 h-12 rounded-lg object-cover shadow-sm bg-gray-100">
+                                <div>
+                                    <h3 class="font-bold text-sm text-gray-900 line-clamp-1">${app.name}</h3>
+                                    <p class="text-xs text-gray-500 line-clamp-1">${app.developer}</p>
+                                    <div class="flex items-center gap-1 mt-1">
+                                        <span class="text-[10px] font-bold text-gray-800">${app.rating || '4.5'} <i class="fa-solid fa-star text-yellow-500"></i></span>
+                                        <span class="text-[10px] text-gray-400">| ${app.size || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Screenshots inside the card -->
+                            <div class="ss-scroll-container no-scrollbar cursor-pointer" onclick="openAppModal('${json}')">
+                                ${ssHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // --- CATEGORY FILTER ---
+        window.filterCategory = (cat) => {
+            document.querySelectorAll('.category-btn').forEach(b => {
+                b.classList.remove('active', 'bg-play-green', 'text-white');
+                b.classList.add('bg-white', 'text-gray-600');
+                if(b.innerText === cat) {
+                    b.classList.add('active', 'bg-play-green', 'text-white');
+                    b.classList.remove('bg-white', 'text-gray-600');
+                }
+            });
+
+            document.getElementById('grid-title').innerText = cat === 'All' ? 'All Apps' : cat + ' Games';
+            const grid = document.getElementById('apps-grid');
+            grid.innerHTML = "";
+
+            const filtered = cat === 'All' ? allApps : allApps.filter(a => a.category === cat);
+
+            filtered.forEach(data => {
+                const json = encodeURIComponent(JSON.stringify(data));
+                grid.innerHTML += `
+                    <div class="flex flex-col gap-2 cursor-pointer group" onclick="openAppModal('${json}')">
+                        <div class="relative w-full aspect-square">
+                            <img src="${data.iconUrl}" class="w-full h-full rounded-2xl shadow-sm object-cover border border-gray-100 bg-gray-50">
+                        </div>
+                        <div class="px-0.5">
+                            <h3 class="text-xs font-medium text-gray-800 truncate">${data.name}</h3>
+                            <div class="flex items-center gap-1 text-[10px] text-gray-500">
+                                <span>${data.rating || '4.5'}</span><i class="fa-solid fa-star text-[8px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        // --- INSTALL HANDLER (Direct Open + Background Update) ---
+        window.installApp = (link, id) => {
+            // 1. Open Link IMMEDIATELY
+            window.open(link, '_blank');
+
+            // 2. Update UI Counter
+            const dlElem = document.getElementById('m-downloads');
+            if(dlElem) {
+                let current = parseInt(dlElem.innerText) || 0;
+                dlElem.innerText = current + 1;
+            }
+
+            // 3. Update Database in Background
+            updateDownloadCount(id);
+        };
+
+        async function updateDownloadCount(id) {
+            try {
+                const appRef = doc(db, "apps", id);
+                await updateDoc(appRef, { downloads: increment(1) });
+            } catch(e) { console.error("Update failed", e); }
+        }
+
+        // --- MODAL ---
+        window.openAppModal = (json) => {
+            const d = JSON.parse(decodeURIComponent(json));
+            
+            document.getElementById('m-icon').src = d.iconUrl;
+            document.getElementById('m-name').innerText = d.name;
+            document.getElementById('m-developer').innerText = d.developer;
+            document.getElementById('m-cat-display').innerText = d.category || 'App';
+            document.getElementById('m-desc').innerText = d.description || 'No description.';
+
+            // Stats
+            document.getElementById('m-rating').innerText = d.rating || '4.5';
+            document.getElementById('m-size').innerText = d.size || 'N/A';
+            document.getElementById('m-downloads').innerText = d.downloads || '0';
+            document.getElementById('m-version').innerText = d.version || 'v1.0';
+
+            // Screenshots
+            const ssContainer = document.getElementById('m-screenshots');
+            ssContainer.innerHTML = "";
+            if(d.screenshots && d.screenshots.length > 0) {
+                d.screenshots.forEach(url => {
+                    ssContainer.innerHTML += `<img src="${url}" class="h-44 w-auto rounded-lg border shadow-sm snap-center bg-gray-50">`;
+                });
+            } else {
+                ssContainer.innerHTML = "<p class='text-xs text-gray-400'>No preview available.</p>";
+            }
+
+            const btn = document.getElementById('m-btn-action');
+            document.getElementById('m-status-msg').classList.add('hidden');
+
+            if(d.priceType === 'Paid') {
+                btn.innerText = `Buy ₹${d.priceAmount}`;
+                btn.onclick = () => {
+                    document.getElementById('payment-modal').classList.remove('hidden');
+                    document.getElementById('pay-price').innerText = `₹${d.priceAmount}`;
+                    document.getElementById('pay-qr').src = adminQrUrl;
+                    // Store ID/Link for verification step
+                    window.pendingApp = d; 
+                };
+            } else {
+                btn.innerText = "Install";
+                // CRITICAL FIX: Direct function call to ensure window.open works
+                btn.onclick = () => installApp(d.downloadLink, d.id);
+            }
+
+            document.getElementById('app-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+        // --- PAYMENT VERIFY ---
+        window.verifySmartPayment = () => {
+            const btn = document.getElementById('verify-btn');
+            const error = document.getElementById('pay-error');
+            const val = document.getElementById('trx-input').value;
+
+            btn.innerText = "Verifying...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // Simple pattern check
+                if(val.length >= 10 && /\d/.test(val)) {
+                    closeModal('payment-modal');
+                    document.getElementById('m-status-msg').classList.remove('hidden');
+                    
+                    // Trigger Download
+                    if(window.pendingApp) {
+                        installApp(window.pendingApp.downloadLink, window.pendingApp.id);
+                    }
+                    
+                    alert("Payment Verified! Download Starting...");
+                } else {
+                    error.innerText = "Invalid Transaction ID";
+                    error.classList.remove('hidden');
+                }
+                btn.innerText = "Verify & Download";
+                btn.disabled = false;
+            }, 1000);
+        };
+
+        // --- SEARCH ---
+        document.getElementById('search-bar').addEventListener('keyup', (e) => {
+            const val = e.target.value.toLowerCase();
+            const grid = document.getElementById('apps-grid');
+            grid.innerHTML = "";
+            const filtered = allApps.filter(a => a.name.toLowerCase().includes(val));
+            filtered.forEach(data => {
+                const json = encodeURIComponent(JSON.stringify(data));
+                grid.innerHTML += `<div class="flex flex-col gap-2 cursor-pointer" onclick="openAppModal('${json}')"><div class="relative w-full aspect-square"><img src="${data.iconUrl}" class="w-full h-full rounded-2xl shadow-sm object-cover border"></div><div class="px-0.5"><h3 class="text-xs font-medium truncate">${data.name}</h3></div></div>`;
+            });
+        });
+
+        // --- PROFILE ---
+        window.user = JSON.parse(localStorage.getItem('play_user')) || null;
+        window.openProfile = () => {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.remove('hidden');
+            if(window.user) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('profile-view').classList.remove('hidden');
+                document.getElementById('p-name').innerText = window.user.name;
+                document.getElementById('p-img').src = window.user.avatar;
+            } else {
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('profile-view').classList.add('hidden');
+            }
+        };
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            const name = document.getElementById('login-name').value;
+            window.user = { name, avatar: `https://ui-avatars.com/api/?name=${name}&background=01875f&color=fff` };
+            localStorage.setItem('play_user', JSON.stringify(window.user));
+            document.getElementById('header-profile-img').src = window.user.avatar;
+            closeModal('profile-modal');
+        };
+        window.handleLogout = () => {
+            localStorage.removeItem('play_user');
+            window.user = null;
+            document.getElementById('header-profile-img').src = "https://ui-avatars.com/api/?name=User&background=6b21a8&color=fff";
+            closeModal('profile-modal');
+        };
+        if(window.user) document.getElementById('header-profile-img').src = window.user.avatar;
+
+        fetchData();
+    </script>
+</body>
+                </html>            <!-- Search Bar Section -->
             <div class="flex items-center justify-between bg-white border border-gray-200 rounded-full shadow-sm px-4 py-2 mt-2">
                 <i class="fa-solid fa-bars text-gray-500 mr-3"></i>
                 
